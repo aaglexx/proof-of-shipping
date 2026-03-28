@@ -1,59 +1,93 @@
 # Proof of Shipping
 
-Proof of Shipping is a hackathon MVP for milestone-based funding.
+## Что это
 
-The product helps teams and contributors answer a simple but important question: should the next tranche of capital be released yet? Instead of relying only on trust, chat updates, or manual review, the builder submits concrete progress evidence, an AI reviewer evaluates whether the milestone was actually shipped, and the protocol interface can unlock funding when the milestone is approved.
+Proof of Shipping — это hackathon MVP для milestone-based funding.
 
-This matters because early-stage teams often raise or receive capital in stages, but the decision to release the next tranche is usually fragmented, subjective, and slow. Proof of Shipping turns that process into a structured, reviewable workflow.
+Идея простая: деньги не должны выдаваться только потому, что кто-то пообещал что-то сделать. Деньги должны двигаться тогда, когда есть реальный результат.
 
-## How It Works
+В этом продукте команда загружает доказательства прогресса, AI оценивает, действительно ли milestone выполнен, и после одобрения можно разблокировать следующий tranche funding-а.
 
-1. Users fund a shared vault.
-2. The builder submits milestone progress and evidence.
-3. AI evaluates the evidence and returns a verdict.
-4. Approved milestones can unlock the next tranche of funds.
+## Как это работает
 
-In the current MVP, the full product flow is already visible in the interface: submit progress, run AI review, and unlock a tranche after approval.
+Flow максимально простой:
 
-## Architecture
+1. Пользователи или contributors вносят деньги в общий vault.
+2. Builder работает над milestone.
+3. Builder отправляет progress и evidence.
+4. AI проверяет, есть ли реальный результат.
+5. Если milestone одобрен, следующий tranche можно unlock.
+
+Идея продукта: funding должен зависеть от результата, а не от обещаний.
+
+## Архитектура
 
 ### Frontend
-- Built with Next.js App Router and TypeScript.
-- Uses a small reusable UI layer for cards, buttons, inputs, badges, selects, and textareas.
-- Main pages:
-  - `/` for overview and vault discovery
-  - `/create-vault` for vault setup mock flow
-  - `/submit-progress` for evidence submission
-  - `/vault/[id]` for milestone review, AI verdict, and tranche unlock
+- Next.js App Router
+- TypeScript
+- Переиспользуемые UI-компоненты
+- Основные страницы:
+  - `/` — overview и список vaults
+  - `/create-vault` — создание vault
+  - `/submit-progress` — отправка evidence
+  - `/vault/[id]` — review milestone, verdict и unlock flow
 
 ### Backend / API
-- Next.js route handlers provide the backend layer for the MVP.
-- `POST /api/submit-evidence` writes builder evidence into the current vault state.
-- `POST /api/judge-milestone` loads the selected vault and milestone, reads the latest evidence submission, calls the AI layer, parses the result, stores the verdict, and returns it to the UI.
+- Используются route handlers внутри Next.js.
+- Основные endpoint-ы:
+  - `POST /api/submit-evidence`
+  - `POST /api/judge-milestone`
+
+`/api/judge-milestone`:
+- получает `vaultId` и `milestoneId`
+- достает milestone из store
+- берет последнее evidence submission
+- отправляет данные в OpenAI
+- получает structured verdict
+- сохраняет verdict в store
 
 ### AI Layer
-- Uses OpenAI through `OPENAI_API_KEY`.
-- The judging route sends milestone context plus the latest evidence submission to the model.
-- The model returns a strict structured verdict:
+- Используется OpenAI API через `OPENAI_API_KEY`
+- AI получает:
+  - title milestone
+  - description milestone
+  - summary progress
+  - PR title
+  - diff summary
+  - changelog
+  - demo notes
+- В ответ AI возвращает verdict:
   - `APPROVE`
   - `REJECT`
   - `NEED_MORE_EVIDENCE`
-- The response also includes confidence, explanation, matched signals, and missing signals.
+- Также возвращаются:
+  - confidence
+  - explanation
+  - matchedSignals
+  - missingSignals
 
 ### Data Layer
-- The current MVP uses an in-memory store.
-- Vaults, milestones, evidence submissions, verdicts, and unlock state all live in local server/client runtime memory.
-- This keeps the project fast to build and easy to demo, while preserving a clean shape for future persistence.
+- Сейчас используется in-memory store
+- Это сделано специально для hackathon speed
+- В store лежат:
+  - vaults
+  - milestones
+  - evidence submissions
+  - verdicts
+  - release state
 
 ### Solana Layer
-- The current repo models the product flow, but does not yet execute real on-chain Solana transactions.
-- Conceptually, the Solana layer would own:
-  - vault creation
-  - deposits from contributors
-  - tranche release after approval
-- In this MVP, the unlock step is a mock product action designed to demonstrate the intended protocol flow.
+Сейчас on-chain логика в проекте mock-овая.
 
-## Project Structure
+Но продукт уже моделирует нужный flow:
+- shared vault
+- deposit
+- milestone gating
+- unlock tranche
+
+В следующей версии сюда можно подключить реальный Solana smart contract.
+
+## Структура проекта
 
 ```text
 app/
@@ -77,75 +111,76 @@ lib/
   utils.ts
 ```
 
-## Installation and Run
+## Установка и запуск
 
-1. Clone the repository.
-2. Install dependencies:
+1. Клонируй репозиторий.
+2. Установи зависимости:
 
 ```bash
 npm install
 ```
 
-3. Create an environment file:
+3. Создай `.env` файл:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-4. Start the development server:
+4. Запусти проект:
 
 ```bash
 npm run dev
 ```
 
-5. Open the app in the browser:
+5. Открой в браузере:
 
 ```text
 http://localhost:3000
 ```
 
-## Demo Flow
+## Как протестировать demo
 
-A fast demo path:
+Быстрый demo flow:
 
-1. Open the homepage and inspect the seeded vault.
-2. Go to `/submit-progress`.
-3. Select the seeded vault and milestone.
-4. Submit evidence describing shipped progress.
-5. Open the vault page.
-6. Click `Review with AI`.
-7. Observe the verdict returned by the model.
-8. If the milestone is approved, click `Unlock Tranche`.
-9. Confirm the visible state change:
-  - milestone becomes unlocked
-  - released capital increases
-  - remaining capital decreases
-  - activity log updates
+1. Открой homepage.
+2. Перейди на `/submit-progress`.
+3. Выбери seeded vault и milestone.
+4. Отправь evidence.
+5. Перейди на страницу vault.
+6. Нажми `Review with AI`.
+7. Посмотри verdict.
+8. Если milestone одобрен, нажми `Unlock Tranche`.
+9. Убедись, что UI обновился:
+  - milestone стал unlocked
+  - released capital увеличился
+  - remaining capital уменьшился
+  - activity log пополнился
 
-## MVP Limitations
+## Ограничения MVP
 
-This project is intentionally lightweight and optimized for hackathon speed.
+Это hackathon MVP, поэтому ограничения честные и ожидаемые:
 
-Current limitations:
-- Uses in-memory storage instead of a real database.
-- Does not yet execute real Solana smart contract interactions.
-- AI judging is simplified and based on a single prompt + latest evidence submission.
-- No authentication or role enforcement.
-- No persistent audit trail beyond runtime memory.
+- используется in-memory storage вместо базы данных
+- нет полноценного on-chain исполнения транзакций
+- AI judging пока упрощенный
+- нет auth и role management
+- нет постоянного audit trail
 
-## Future Development
+## Будущее развитие
 
-Natural next steps for the project:
-- replace the in-memory store with persistent storage
-- connect the unlock flow to a real smart contract on Solana
-- add contributor deposit transactions on-chain
-- add GitHub integration for PR and diff verification
-- add a stronger oracle or attestation layer for milestone evidence
-- support richer AI review inputs such as commit history, dashboards, Loom transcripts, and project artifacts
-- add wallet auth and role-based permissions for contributors, builders, and reviewers
+Что можно сделать дальше:
+- подключить реальную базу данных
+- добавить реальный smart contract на Solana
+- добавить настоящие on-chain deposits и tranche release
+- подключить GitHub integration для PR verification
+- добавить oracle / attestation layer
+- добавить wallet auth и роли
+- расширить AI review за счет commit history, dashboards, Loom и project artifacts
 
-## Why This Project Is Interesting
+## Зачем этот проект нужен
 
-Proof of Shipping sits at the intersection of AI, coordination, and on-chain capital allocation.
+Proof of Shipping показывает очень понятную идею:
 
-It demonstrates a product direction where funding is not released only because time passed or because someone asked for it, but because progress is observable, reviewable, and explainable.
+Капитал должен двигаться не потому, что кто-то красиво рассказывает про прогресс, а потому что прогресс можно проверить.
+
+Это делает funding более прозрачным, более честным и более автоматизированным.
