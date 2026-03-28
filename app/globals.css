@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #06070a;
+  --color-background-strong: #0a0d12;
+  --color-surface: #0f131a;
+  --color-surface-muted: rgba(15, 19, 26, 0.92);
+  --color-surface-elevated: #141a22;
+  --color-border: rgba(148, 163, 184, 0.14);
+  --color-border-strong: rgba(96, 165, 250, 0.22);
+  --color-foreground: #f7fafc;
+  --color-muted: #8a94a7;
+  --color-primary: #60a5fa;
+  --color-primary-strong: #93c5fd;
+  --color-accent: #34d399;
+  --color-success: #22c55e;
+  --color-warning: #d9a441;
+  --font-sans: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --radius-card: 0.625rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.08), transparent 22%),
+    linear-gradient(180deg, #050608 0%, #090b10 50%, #06070a 100%);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 94%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(96, 165, 250, 0.24);
+  color: white;
+}
